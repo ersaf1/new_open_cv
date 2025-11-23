@@ -44,14 +44,14 @@ class GestureRecognitionApp:
         self.gesture_map = {
             (1, 1, 1, 1, 1): "Kepalan Tangan (Fist)",
             (1, 0, 0, 0, 0): "Mantap",
-            (0, 1, 0, 0, 0): "Halo",
-            (0, 1, 1, 0, 0): "Nama Saya",
-            (0, 1, 1, 1, 0): "Ersaf Sirazi Arifin",
-            (0, 1, 1, 1, 1): "Kelas ",
-            (1, 1, 1, 1, 1): "Lima Jari (Open Hand)",
+            (0, 1, 0, 0, 0): "Nama Saya",
+            (0, 1, 1, 0, 0): "Ersaf Sirazi Arifin",
+            (0, 1, 1, 1, 0): "Kelas",
+            (0, 1, 1, 1, 1): "XI PPLG 2",
+            (1, 1, 1, 1, 1): "Halo",
             (0, 1, 0, 0, 1): "Rock n Roll",
             (1, 1, 0, 0, 1): "XI PPLG 2",
-            (0, 0, 1, 0, 0): "Anjing Lo",
+            (0, 0, 1, 0, 0): "NGENTOT LO ANJING TAI BANGSAT",
         }
 
     def detect_fingers(self, hand_landmarks, handedness_label):
@@ -206,11 +206,44 @@ class GestureRecognitionApp:
                     cv2.putText(img, status_str, (cx, cy + 30), 
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
-                    # Tampilkan Nama Gesture (Hasil Utama)
-                    # Kotak background untuk teks agar mudah dibaca
-                    cv2.rectangle(img, (cx - 20, cy - 45), (cx + 250, cy - 10), (0, 0, 0), cv2.FILLED)
-                    cv2.putText(img, gesture_text, (cx - 15, cy - 20), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    # Tampilkan Nama Gesture (Hasil Utama) dengan Text Wrapping
+                    max_width = 200  # Lebar maksimum teks sebelum turun baris
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 0.8
+                    thickness = 2
+                    
+                    words = gesture_text.split(' ')
+                    lines = []
+                    current_line = ""
+                    
+                    for word in words:
+                        test_line = current_line + word + " "
+                        (text_w, text_h), _ = cv2.getTextSize(test_line, font, font_scale, thickness)
+                        if text_w > max_width and current_line != "":
+                            lines.append(current_line)
+                            current_line = word + " "
+                        else:
+                            current_line = test_line
+                    lines.append(current_line)
+
+                    # Hitung tinggi kotak background
+                    line_height = 30
+                    box_height = len(lines) * line_height
+                    
+                    # Koordinat kotak (tumbuh ke atas dari posisi awal)
+                    box_x1 = cx - 20
+                    box_y2 = cy - 10
+                    box_y1 = box_y2 - box_height - 10 # -10 untuk padding atas
+                    box_x2 = box_x1 + max_width + 30
+
+                    # Gambar background hitam
+                    cv2.rectangle(img, (box_x1, box_y1), (box_x2, box_y2), (0, 0, 0), cv2.FILLED)
+
+                    # Gambar teks per baris
+                    for i, line in enumerate(lines):
+                        y_pos = box_y1 + 30 + (i * line_height)
+                        cv2.putText(img, line.strip(), (box_x1 + 10, y_pos - 5), 
+                                    font, font_scale, (0, 255, 0), thickness)
 
             # Tampilkan frame akhir
             cv2.imshow("Gesture & Face Recognition System", img)
